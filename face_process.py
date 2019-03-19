@@ -87,6 +87,8 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
     detector = dlib.get_frontal_face_detector()
     cnndetector = dlib.cnn_face_detection_model_v1("mmod_human_face_detector.dat")
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    use_cnn_face_detector = True
+    use_frontal_face_detector = True
 
     # open the file    
     capture = cv2.VideoCapture(filepath)
@@ -118,30 +120,36 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
         frame = imutils.resize(image, width=600)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # apply face detection
-        rects = detector(gray,0)
+        # optionally use DLIB's frontal face detector (HOG+SVG?) to detect faces.. faster than CNN!
+        # note: We can use both right now, because I want to see the results
+        if use_frontal_face_detector == True:
+            # apply face detection using HOG method.. returns a list of rects..
+            faces_dlib = detector(gray,0)
 
-        # loop through detected faces
-        for rect in rects:
-            shape = predictor(gray,rect)
-            shape = face_utils.shape_to_np(shape)
+            # loop through detected faces
+            for face in faces_dlib:
+                shape = predictor(gray,face)
+                shape = face_utils.shape_to_np(shape)
 
-            for(x,y) in shape:
-                scaledx = int(x * (frame_width/600))
-                scaledy = int(y * (frame_width/600))
-                cv2.circle(image,(scaledx,scaledy),3,(0,255,255),-1)
-
-        faces_cnn = cnndetector(gray,0)
-
-        for face in faces_cnn:
-            shape = predictor(gray,rect)
-            shape = face_utils.shape_to_np(shape)
-
-            for(x,y) in shape:
-                scaledx = int(x * (frame_width/600))
-                scaledy = int(y * (frame_width/600))
-                cv2.circle(image,(scaledx,scaledy),3,(255,255,0),-1)
+                for(x,y) in shape:
+                    scaledx = int(x * (frame_width/600))
+                    scaledy = int(y * (frame_width/600))
+                    cv2.circle(image,(scaledx,scaledy),3,(0,255,255),-1)
         
+        # optionally do a pass using the CNN based face detector
+        if use_cnn_face_detector == True:
+            # uses a Maximum-Margin Object Detector (MMOD)
+            faces_cnn = cnndetector(gray,0)
+
+            for face in faces_cnn:
+                shape = predictor(gray,face.rect)
+                shape = face_utils.shape_to_np(shape)
+
+                for(x,y) in shape:
+                    scaledx = int(x * (frame_width/600))
+                    scaledy = int(y * (frame_width/600))
+                    cv2.circle(image,(scaledx,scaledy),3,(255,255,0),-1)
+            
         out.write(image)
 
         #cv2.imshow('frame', image)

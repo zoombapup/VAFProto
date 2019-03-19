@@ -5,9 +5,8 @@
             "name": "Scene from Tropic Thunder",
             "video_url":"https://www.youtube.com/watch?v=8nh6aXeO_E0",
             "subclips":[],
-            "writePose": "True",
-            "writeFaceLandmarks": "True",
-            "writePose": "True"
+            "writePose": "False",
+            "writeFaceLandmarks": "True"
         }
     ]
 }

@@ -15,6 +15,15 @@ def ParseJsonFile(filepath):
     except FileNotFoundError:
         print("File Not found while loading Json file {}".format(filepath))
 
+def IsJsonValueTrue(json,valuename):
+    if valuename in json:
+        if json[valuename] == "True":
+            return True
+        else:
+            return False
+    else:
+        return False
+        
 # json file contains all the files to download and/or process (downloads are cached so we don't redownload things)
 data_to_process = ParseJsonFile("test.json")
 ##if(data_to_process is not None):
@@ -58,11 +67,12 @@ for video_info in data_to_process["videos"]:
                 print("Processing video file: {} with json output file: {} ".format(filepathname,jsonfilename))
 
                 # write scene list to json file
-                if "writeScenes" in video_info:
+                if "writeScenes" in video_info and video_info['writeScenes'] == "True":
                     process_video_for_scene_detection(filepathname,jsonfilename)
 
                 # now we look at the various processing options from the json data and use them 
-                if "writeFaceLandmarks" in video_info:
+                #if "writeFaceLandmarks" in video_info and video_info['writeFaceLandmarks'] == "True":
+                if IsJsonValueTrue(video_info,"writeFaceLandmarks"):
                     process_video_for_face_landmarks_dlib(filepathname,processeddir,True)
                 #process_video_for_face_and_bounds(filepathname,processeddir,True)   # third param is if we want to reset image frame to black and alpha-only draw CV info
                 #process_video_for_openpose(filepathname, processeddir)
@@ -71,10 +81,12 @@ for video_info in data_to_process["videos"]:
                 if "disable_blending" in video_info:
                     disable_blending = video_info["disable_blending"]
                         
-                if "writePose" in video_info:
+                if "writePose" in video_info and video_info['writePose'] == "True":
                     if "writePoseJson" in video_info:
                         process_video_for_openpose_to_json(filepathname, processeddir, jsonfilename,disable_blending)
                     else: 
                         print("Ignoring video file: {} for pose ouput to json output file: {} ".format(filepathname,jsonfilename))
                         process_video_for_openpose(filepathname, processeddir,disable_blending)
+                else:
+                    print("Ignoring video file: {} for pose ouput {} as writePose was not True ".format(filepathname,jsonfilename))
         
