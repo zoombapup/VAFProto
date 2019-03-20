@@ -4,7 +4,12 @@
         { 
             "name": "Scene from Tropic Thunder",
             "video_url":"https://www.youtube.com/watch?v=8nh6aXeO_E0",
-            "subclips":[],
+            "subclips":[
+                { 
+                    "start": "00:00:00",
+                    "end": "00:00:28"
+                }
+            ],
             "writePose": "False",
             "writeFaceLandmarks": "True"
         }
