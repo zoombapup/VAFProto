@@ -11,7 +11,8 @@
                 }
             ],
             "writePose": "False",
-            "writeFaceLandmarks": "True"
+            "writeFaceLandmarks": "False",
+            "writeScenes": "True"
         }
     ]
 }

@@ -5,40 +5,18 @@ from scenedetect.scene_manager import SceneManager
 from scenedetect.frame_timecode import FrameTimecode
 from scenedetect.stats_manager import StatsManager
 from scenedetect.detectors.content_detector import ContentDetector
+from moviepy.editor import *
 import string
 import numpy as np
 import os
 from pkg_resources import resource_filename, Requirement
 from pathlib import Path
 import json
+from json_utils import *
 
-# for utterly stupid json serialization not working for int32 numpy datatype.. goddam python!
-class MyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        else:
-            return super(MyEncoder, self).default(obj)
+import moviepy.config as mpconf
 
-def ParseJsonFile(filepath):
-    try:
-        with open(filepath) as json_file:
-            data = json.load(json_file)
-        return data    
-    except FileNotFoundError:
-        print("File Not found while loading Json file {}".format(filepath))
-
-
-def WriteJsonFile(filepath, json_data):
-    try:
-        with open(filepath,'w') as json_file:
-            json.dump(json_data,json_file)
-    except IOError:
-        print("IO Error Writing Json file {}".format(filepath))
+mpconf.change_settings()
 
 # Process video using pyscenedetect and save the scenes to json file for later use
 def process_video_for_scene_detection(filepath, jsonfilename):
@@ -96,4 +74,43 @@ def process_video_for_scene_detection(filepath, jsonfilename):
 
     # write back the json file
     WriteJsonFile(jsonfilename,main_json_data)
-  
+
+def render_scenes_to_video(filepath,processedfiledir, jsonfilename):
+
+      # can't work on a file that doesn't exist!
+    if(os.path.isfile(filepath) == False):
+        print("File {} does not exist, exiting render_scenes_to_video...\n".format(filepath))
+        return
+    
+    print("Processing {} and writing detected scenes".format(filepath))
+
+    main_json_data = ParseJsonFile(jsonfilename)
+    # in case the main json file doesn't exist yet (this is first method to write to it for instance)
+    if main_json_data is None:
+        main_json_data = {}
+    
+    if "Scenes" in main_json_data:
+        # we have scene info.. process the input video in a loop and write on the scene number at top left
+        currentframeindex = 0
+
+        p = Path(filepath)
+        ext = p.suffix    
+   
+        writefilename = processedfiledir + "/" + p.stem + "_scenes_temp" + ext
+
+        mainclip = VideoFileClip(filepath)
+        text = []
+        for scene in main_json_data["Scenes"]:
+            # create a new moviepy image clip with the scene number on it
+            text.append(TextClip(str(currentframeindex),fontsize=40,color='white',method='label',).set_start(scene["start_timecode"],False).set_end(scene["end_timecode"]))
+            currentframeindex = currentframeindex + 1
+
+        textclips = concatenate_videoclips(text)
+        compositeclip = CompositeVideoClip([mainclip,textclips])
+
+        compositeclip.write_videofile(writefilename)
+
+
+
+
+

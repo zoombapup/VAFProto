@@ -2,3 +2,5 @@ __pycache__/face_process.cpython-36.pyc
 __pycache__/face_process_cv.cpython-36.pyc
 __pycache__/face_process_dlib.cpython-36.pyc
 *.mp4
+__pycache__/scenedetect_process.cpython-36.pyc
+__pycache__/json_utils.cpython-36.pyc

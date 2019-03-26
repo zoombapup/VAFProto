@@ -3,26 +3,12 @@ from ytdl_pafy_process import *
 from face_process import *
 from process_openpose_extern import *
 import os
-from scenedetect_process import process_video_for_scene_detection
+from json_utils import *
+from scenedetect_process import *
+
 ## empty python dict - will get filled with data for choosing which videos to process etc.p
 data_to_process = {}
 
-def ParseJsonFile(filepath):
-    try:
-        with open(filepath) as json_file:
-            data = json.load(json_file)
-        return data    
-    except FileNotFoundError:
-        print("File Not found while loading Json file {}".format(filepath))
-
-def IsJsonValueTrue(json,valuename):
-    if valuename in json:
-        if json[valuename] == "True":
-            return True
-        else:
-            return False
-    else:
-        return False
         
 # json file contains all the files to download and/or process (downloads are cached so we don't redownload things)
 data_to_process = ParseJsonFile("test.json")
@@ -69,6 +55,7 @@ for video_info in data_to_process["videos"]:
                 # write scene list to json file
                 if "writeScenes" in video_info and video_info['writeScenes'] == "True":
                     process_video_for_scene_detection(filepathname,jsonfilename)
+                    render_scenes_to_video(filepathname,processeddir,jsonfilename)
 
                 # now we look at the various processing options from the json data and use them 
                 #if "writeFaceLandmarks" in video_info and video_info['writeFaceLandmarks'] == "True":
