@@ -9,3 +9,5 @@ __pycache__/json_utils.cpython-36.pyc
 __pycache__/
 
 processedvideos/
+unprocessedvideos/
+cachedvideos/
