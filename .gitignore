@@ -1,0 +1,4 @@
+__pycache__/face_process.cpython-36.pyc
+__pycache__/face_process_cv.cpython-36.pyc
+__pycache__/face_process_dlib.cpython-36.pyc
+*.mp4

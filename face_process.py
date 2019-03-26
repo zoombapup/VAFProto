@@ -14,6 +14,8 @@ import json
 import dlib
 import imutils
 from imutils import face_utils
+from face_process_dlib import *
+from face_process_cv import *
 
 # for utterly stupid json serialization not working for int32 numpy datatype.. goddam python!
 class MyEncoder(json.JSONEncoder):
@@ -83,12 +85,38 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
         print("File {} already exists, exiting process_video_for_face_landmarks_dlib..\n".format(writefilename))
         return
 
-    # load dlib models etc
-    detector = dlib.get_frontal_face_detector()
-    cnndetector = dlib.cnn_face_detection_model_v1("mmod_human_face_detector.dat")
-    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-    use_cnn_face_detector = True
-    use_frontal_face_detector = True
+    use_dlib_cnn_face_detector = False
+    use_dlib_frontal_face_detector = False
+    use_opencv_haar_face_detector = True
+    use_opencv_ssd_face_detector = False
+
+    if use_dlib_frontal_face_detector == True:
+        dlib_hog = FaceDetector_DLib_Hog()
+    if use_dlib_cnn_face_detector == True:
+        dlib_cnn = FaceDetector_DLib_CNN()
+    if use_opencv_haar_face_detector == True:
+        opencv_haar = FaceDetector_OpenCV_Haar()
+    if use_opencv_ssd_face_detector == True:
+        opencv_ssd = FaceDetector_OpenCV_SSD()
+
+    
+    # # opencv options for DNN model from different formats
+    # DNN = "CAFFE"
+    # if DNN == "CAFFE":
+    #     #modelFile = "res10_300x300_ssd_iter_140000_fp16.caffemodel"
+    #     #configFile = "deploy.prototxt"
+    #     #net = cv2.dnn.readNetFromCaffe(configFile, modelFile)
+    #         # access resource files inside package
+    #     prototxt = resource_filename(Requirement.parse('cvlib'),
+    #                                                 'cvlib' + os.path.sep + 'data' + os.path.sep + 'deploy.prototxt')
+    #     caffemodel = resource_filename(Requirement.parse('cvlib'),
+    #                                             'cvlib' + os.path.sep + 'data' + os.path.sep + 'res10_300x300_ssd_iter_140000.caffemodel')
+    #     # read pre-trained wieights
+    #     net = cv2.dnn.readNetFromCaffe(prototxt, caffemodel)
+    # else:
+    #     modelFile = "opencv_face_detector_uint8.pb"
+    #     configFile = "opencv_face_detector.pbtxt"
+    #     net = cv2.dnn.readNetFromTensorflow(modelFile, configFile)
 
     # open the file    
     capture = cv2.VideoCapture(filepath)
@@ -117,38 +145,22 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
         progress_bar.update()
         currentframe += 1
 
-        frame = imutils.resize(image, width=600)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Use OpenCV's Haar Cascade face detector.. this is probably rubbish
+        # note: eventually want to disable most of these after evaluation
+        if use_opencv_haar_face_detector == True:
+            opencv_haar.DetectFaces(image)
 
-        # optionally use DLIB's frontal face detector (HOG+SVG?) to detect faces.. faster than CNN!
-        # note: We can use both right now, because I want to see the results
-        if use_frontal_face_detector == True:
-            # apply face detection using HOG method.. returns a list of rects..
-            faces_dlib = detector(gray,0)
+        # Use OpenCV's SSD based face detector.. this is supposedly fast and reliable.. yeah right!
+        # note: eventually want to disable most of these after evaluation
+        if use_opencv_ssd_face_detector == True:
+            opencv_ssd.DetectFaces(image)
 
-            # loop through detected faces
-            for face in faces_dlib:
-                shape = predictor(gray,face)
-                shape = face_utils.shape_to_np(shape)
+        if use_dlib_frontal_face_detector == True:
+            dlib_hog.DetectFaces(image)    
 
-                for(x,y) in shape:
-                    scaledx = int(x * (frame_width/600))
-                    scaledy = int(y * (frame_width/600))
-                    cv2.circle(image,(scaledx,scaledy),3,(0,255,255),-1)
-        
-        # optionally do a pass using the CNN based face detector
-        if use_cnn_face_detector == True:
-            # uses a Maximum-Margin Object Detector (MMOD)
-            faces_cnn = cnndetector(gray,0)
+        if use_dlib_cnn_face_detector == True:
+            dlib_cnn.DetectFaces(image)
 
-            for face in faces_cnn:
-                shape = predictor(gray,face.rect)
-                shape = face_utils.shape_to_np(shape)
-
-                for(x,y) in shape:
-                    scaledx = int(x * (frame_width/600))
-                    scaledy = int(y * (frame_width/600))
-                    cv2.circle(image,(scaledx,scaledy),3,(255,255,0),-1)
             
         out.write(image)
 
