@@ -3,8 +3,11 @@ from ytdl_pafy_process import *
 from face_process import *
 from process_openpose_extern import *
 import os
+import numpy
 from json_utils import *
 from scenedetect_process import *
+from process_video_template import *
+from process_video_maskrcnn import *
 
 ## empty python dict - will get filled with data for choosing which videos to process etc.p
 data_to_process = {}
@@ -52,10 +55,16 @@ for video_info in data_to_process["videos"]:
                 jsonfilename = processeddir + "/" + p.stem + ".json"
                 print("Processing video file: {} with json output file: {} ".format(filepathname,jsonfilename))
 
+                results = VideoProcessor().Process_Video(filepathname,jsonfilename,processeddir)
+                #print(results)
+                maskresults = MaskRCNN_VideoProcessor().Process_Video(filepathname,jsonfilename,processeddir)
+
                 # write scene list to json file
                 if "writeScenes" in video_info and video_info['writeScenes'] == "True":
                     process_video_for_scene_detection(filepathname,jsonfilename)
                     render_scenes_to_video(filepathname,processeddir,jsonfilename)
+
+
 
                 # now we look at the various processing options from the json data and use them 
                 #if "writeFaceLandmarks" in video_info and video_info['writeFaceLandmarks'] == "True":

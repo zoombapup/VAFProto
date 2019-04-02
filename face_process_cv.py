@@ -53,12 +53,16 @@ class FaceDetector_OpenCV_Haar:
 
 class FaceDetector_OpenCV_SSD:
     def __init__(self):
-        prototxt = resource_filename(Requirement.parse('cvlib'),
-                                                    'cvlib' + os.path.sep + 'data' + os.path.sep + 'deploy.prototxt')
-        caffemodel = resource_filename(Requirement.parse('cvlib'),
-                                                'cvlib' + os.path.sep + 'data' + os.path.sep + 'res10_300x300_ssd_iter_140000.caffemodel')
+        #prototxt = resource_filename(Requirement.parse('cvlib'),
+        #                                            'cvlib' + os.path.sep + 'data' + os.path.sep + 'deploy.prototxt')
+        #caffemodel = resource_filename(Requirement.parse('cvlib'),
+        #                                        'cvlib' + os.path.sep + 'data' + os.path.sep + 'res10_300x300_ssd_iter_140000.caffemodel')
+        prototxt = "./models/deploy.prototxt"
+        caffemodel = "./models/res10_300x300_ssd_iter_140000_fp16.caffemodel"
         # read pre-trained wieights
         self.net = cv2.dnn.readNetFromCaffe(prototxt, caffemodel)
+        # shape predictor is dlib's one
+        self.dlib_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
     def detect_faces(self, image, net, threshold=0.5):
     
@@ -97,7 +101,14 @@ class FaceDetector_OpenCV_SSD:
         return faces, confidences
 
     def DetectFaces(self,image):
-        faces, confidences = self.detect_faces(image,net,0.4)
+        # convert the incoming image frame into a grayscale image
+        frame_height,frame_width,channels = image.shape
+        frame = imutils.resize(image, width=600)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #frameOpenCVHaarSmall = cv2.resize(image, (300,300))
+        #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        faces, confidences = self.detect_faces(image,self.net,0.4)
         # loop through detected faces
         for face,conf in zip(faces,confidences):
             (startX,startY) = face[0],face[1]
@@ -107,12 +118,18 @@ class FaceDetector_OpenCV_SSD:
             text = "confidence: {0:4.3f}".format(conf)
             cv2.putText(image, text, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), lineType=cv2.LINE_AA) 
             # now lets get the predicted landmarks and draw them
-            scaled_face = face
-            scaled_face[0] = scaled_face[0] 
-            shape = dlib_predictor(gray,face)
+            #scaled_face = face
+            # scaled_face[0] = scaled_face[0] 
+            xscale = 1 # frame.shape[1] / image.shape[1]
+            yscale = 1 # frame.shape[0] / image.shape[0]
+            # bounding box = left, top, right, bottom (x,y,x1,y1)
+            boundingbox = dlib.rectangle(int(face[0] * xscale),int(face[1] * yscale),int(face[2] * xscale),int(face[3] * yscale))
+            # scale the bounding box?
+
+            shape = self.dlib_predictor(image,boundingbox)
             shape = face_utils.shape_to_np(shape)
 
             for(x,y) in shape:
-                scaledx = int(x * (frame_width/600))
-                scaledy = int(y * (frame_width/600))
+                scaledx = x # int(x * (image.shape[1]/frame.shape[1]))
+                scaledy = y # int(y * (image.shape[0]/frame.shape[0]))
                 cv2.circle(image,(scaledx,scaledy),3,(255,0,255),-1)

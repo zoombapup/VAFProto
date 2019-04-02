@@ -87,8 +87,8 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
 
     use_dlib_cnn_face_detector = False
     use_dlib_frontal_face_detector = False
-    use_opencv_haar_face_detector = True
-    use_opencv_ssd_face_detector = False
+    use_opencv_haar_face_detector = False
+    use_opencv_ssd_face_detector = True
 
     if use_dlib_frontal_face_detector == True:
         dlib_hog = FaceDetector_DLib_Hog()
@@ -131,7 +131,11 @@ def process_video_for_face_landmarks_dlib(filepath, processedfiledir, alphaonly)
 
 
     # use *'MJPG' for the most reliable, but filesize will be insane
-    out = cv2.VideoWriter(writefilename,cv2.VideoWriter_fourcc(*'H264'), fps, (frame_width,frame_height))
+    #out = cv2.VideoWriter(writefilename,cv2.VideoWriter_fourcc(*"H264"), fps, (frame_width,frame_height))
+    fourcc=cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(writefilename,fourcc, fps, (frame_width,frame_height))
+    
+    #out = cv2.VideoWriter(writefilename,int("0x21",16), fps, (frame_width,frame_height))
     ##out = cv2.VideoWriter(writefilename,-1, fps, (frame_width,frame_height))
 
     total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))

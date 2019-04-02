@@ -37,6 +37,7 @@ def process_video_for_scene_detection(filepath, jsonfilename):
     else:
         main_json_data["Scenes"].clear()
 
+    # videomanager takes a Python list of filenames, so we create a list and add our one file name to that
     absolute_filepath = os.path.abspath(filepath)
     filelist = list()
     filelist.append(absolute_filepath)
@@ -82,7 +83,7 @@ def render_scenes_to_video(filepath,processedfiledir, jsonfilename):
         print("File {} does not exist, exiting render_scenes_to_video...\n".format(filepath))
         return
     
-    print("Processing {} and writing detected scenes".format(filepath))
+    print("Processing {} and writing temp video for detected scenes".format(filepath))
 
     main_json_data = ParseJsonFile(jsonfilename)
     # in case the main json file doesn't exist yet (this is first method to write to it for instance)
